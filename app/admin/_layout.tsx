@@ -1,10 +1,10 @@
-import { Tabs } from 'expo-router';
-import React from 'react';
-import { Ionicons } from '@expo/vector-icons';
+import { HapticTab } from '@/components/haptic-tab';
 import { Colors, GradientColors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { HapticTab } from '@/components/haptic-tab';
+import { Tabs } from 'expo-router';
+import React from 'react';
 
 export default function AdminLayout() {
   const colorScheme = useColorScheme() ?? 'light';
@@ -75,12 +75,22 @@ export default function AdminLayout() {
           }}
         />
         <Tabs.Screen
+          name="partners"
+          options={{
+            title: 'Mitra',
+            headerShown: false,
+            tabBarIcon: ({ color }) => (
+              <Ionicons name="business-outline" size={24} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
           name="settings"
           options={{
             title: 'Lainnya',
             headerShown: false,
             tabBarIcon: ({ color }) => (
-              <Ionicons name="settings-outline" size={24} color={color} />
+              <Ionicons name="ellipsis-horizontal-outline" size={24} color={color} />
             ),
           }}
         />
