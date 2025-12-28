@@ -4,10 +4,10 @@
     "slug": "iot-lab-itb-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "../Logo Lab IoT/android-chrome-512x512.png",
+    "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "automatic",
     "splash": {
-      "image": "../Logo Lab IoT/android-chrome-512x512.png",
+      "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#0ea5e9"
     },
@@ -20,13 +20,13 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "../Logo Lab IoT/android-chrome-512x512.png",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundColor": "#0ea5e9"
       },
       "package": "com.iotlabitb.mobile"
     },
     "web": {
-      "favicon": "../Logo Lab IoT/favicon.ico",
+      "favicon": "./assets/images/favicon.png",
       "bundler": "metro"
     },
     "plugins": [
