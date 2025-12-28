@@ -26,9 +26,13 @@ export default function TabLayout() {
           headerShown: false,
           tabBarButton: HapticTab,
           tabBarStyle: {
-            backgroundColor: colors.card,
+            backgroundColor: colors.navBarBackground,
             borderTopColor: colors.border,
+            borderTopWidth: 1,
+            position: 'absolute',
+            elevation: 0,
           },
+          sceneStyle: { backgroundColor: 'transparent' },
         }}>
         <Tabs.Screen
           name="index"

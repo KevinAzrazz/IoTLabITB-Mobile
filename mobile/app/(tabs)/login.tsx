@@ -203,6 +203,7 @@ const styles = StyleSheet.create({
   contentContainer: {
     flexGrow: 1,
     padding: 20,
+    paddingBottom: 100,
     justifyContent: 'center',
   },
 

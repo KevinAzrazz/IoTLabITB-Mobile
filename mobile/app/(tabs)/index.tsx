@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import {
   StyleSheet,
   Text,
@@ -64,6 +64,9 @@ const CATEGORIES = ['all', 'S1', 'S2', 'S3'];
 export default function HomeScreen() {
   const colorScheme = useColorScheme() ?? 'light';
   const colors = Colors[colorScheme];
+  
+  const scrollViewRef = useRef<ScrollView>(null);
+  const [projectsSectionY, setProjectsSectionY] = useState(0);
   
   const [filter, setFilter] = useState('all');
   const [projects, setProjects] = useState<Project[]>([]);
@@ -143,6 +146,7 @@ export default function HomeScreen() {
         translucent
       />
       <ScrollView
+        ref={scrollViewRef}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
@@ -163,7 +167,10 @@ export default function HomeScreen() {
               <View style={[styles.heroCard, { backgroundColor: colorScheme === 'dark' ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.85)' }]}>
                 <Text style={[styles.heroTitle, { color: colors.text }]}>{heroTitle}</Text>
                 <Text style={[styles.heroSubtitle, { color: colors.textMuted }]}>{heroSubtitle}</Text>
-                <TouchableOpacity style={[styles.heroButton, { backgroundColor: colors.primary }]}>
+                <TouchableOpacity 
+                  style={[styles.heroButton, { backgroundColor: colors.primary }]}
+                  onPress={() => scrollViewRef.current?.scrollTo({ y: projectsSectionY, animated: true })}
+                >
                   <Text style={styles.heroButtonText}>Lihat Proyek Kami</Text>
                   <Ionicons name="arrow-forward" size={18} color="#fff" />
                 </TouchableOpacity>
@@ -174,7 +181,7 @@ export default function HomeScreen() {
 
         {/* ==================== ABOUT SECTION ==================== */}
         <View style={styles.section}>
-          <Text style={[styles.sectionEyebrow, { color: colors.primary }]}>TENTANG KAMI</Text>
+          <Text style={[styles.sectionEyebrow, { color: colors.accent }]}>TENTANG KAMI</Text>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>{aboutTitle}</Text>
           
           {aboutImage ? (
@@ -230,7 +237,10 @@ export default function HomeScreen() {
         </View>
 
         {/* ==================== PROJECTS SECTION ==================== */}
-        <View style={styles.section}>
+        <View 
+          style={styles.section}
+          onLayout={(event) => setProjectsSectionY(event.nativeEvent.layout.y)}
+        >
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>Riset & Proyek</Text>
             <Text style={[styles.sectionDescription, { color: colors.textMuted }]}>
@@ -353,7 +363,7 @@ export default function HomeScreen() {
         {/* ==================== FOOTER ==================== */}
         <View style={[styles.footer, { borderTopColor: colors.border }]}>
           <Text style={[styles.footerText, { color: colors.textMuted }]}>© 2025 IoT Lab</Text>
-          <Text style={[styles.footerLink, { color: colors.primary }]}>Institut Teknologi Bandung</Text>
+          <Text style={[styles.footerLink, { color: colors.accent }]}>Institut Teknologi Bandung</Text>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -367,6 +377,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
+    paddingBottom: 90,
   },
   loadingContainer: {
     flex: 1,

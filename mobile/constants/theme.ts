@@ -10,9 +10,9 @@
 
 import { Platform } from 'react-native';
 
-// Primary green color matching web app (Tailwind green-500)
-const primaryGreen = '#22c55e';
-const primaryGreenDark = '#16a34a';
+// Primary green colors - different for light/dark for better contrast
+const primaryGreenLight = '#15803d';  // green-700 - darker for light mode contrast
+const primaryGreenDark = '#22c55e';   // green-500 - brighter for dark mode
 
 // Gradient colors from web CSS
 export const GradientColors = {
@@ -24,40 +24,45 @@ export const Colors = {
   light: {
     // Text colors (matching web foreground/muted-foreground)
     text: '#1a1a1a',           // text-foreground
-    textMuted: '#6b7280',      // text-muted-foreground (gray-500)
+    textMuted: '#4b5563',      // gray-600 - darker for better contrast
     
     // Background colors
     background: '#ffffff',      // bg-background
-    backgroundSecondary: '#f9fafb', // bg-secondary/30 equivalent (gray-50)
+    backgroundSecondary: '#f3f4f6', // gray-100
     
     // Gradient colors for background
     gradientStart: '#a9caac',
     gradientEnd: '#74b787',
     
-    // Primary colors (green - matching web buttons)
-    tint: primaryGreen,
-    primary: primaryGreen,
-    primaryDark: primaryGreenDark,
+    // Primary colors (green - darker for light mode contrast)
+    tint: primaryGreenLight,
+    primary: primaryGreenLight,
+    primaryDark: '#166534',     // green-800
+    
+    // Accent color for eyebrow text like "TENTANG KAMI"
+    accent: '#166534',          // green-800 - very dark green for contrast
     
     // Secondary colors
-    secondary: '#eab308',       // yellow-500
-    accent: primaryGreen,
+    secondary: '#ca8a04',       // yellow-600 - darker for contrast
     
     // UI element colors
-    icon: '#6b7280',            // gray-500
-    tabIconDefault: '#6b7280',  // gray-500
-    tabIconSelected: primaryGreen,
+    icon: '#4b5563',            // gray-600
+    tabIconDefault: '#4b5563',  // gray-600
+    tabIconSelected: primaryGreenLight,
+    
+    // NavBar colors
+    navBarBackground: 'rgba(255, 255, 255, 0.95)',
     
     // Border & Card colors
-    border: '#e5e7eb',          // border-border (gray-200)
+    border: '#d1d5db',          // gray-300
     card: '#ffffff',            // bg-card
     cardForeground: '#1a1a1a',  // text-card-foreground
     
     // Status colors
-    success: '#22c55e',
-    error: '#ef4444',
-    warning: '#f59e0b',
-    info: '#3b82f6',
+    success: '#16a34a',         // green-600
+    error: '#dc2626',           // red-600
+    warning: '#d97706',         // amber-600
+    info: '#2563eb',            // blue-600
   },
   dark: {
     // Text colors
@@ -72,19 +77,24 @@ export const Colors = {
     gradientStart: '#060040',
     gradientEnd: '#1d0039',
     
-    // Primary colors
+    // Primary colors (brighter green for dark mode)
     tint: '#ffffff',
-    primary: primaryGreen,
-    primaryDark: primaryGreenDark,
+    primary: primaryGreenDark,
+    primaryDark: '#16a34a',     // green-600
+    
+    // Accent color
+    accent: '#4ade80',          // green-400 - bright for dark mode
     
     // Secondary colors
-    secondary: '#eab308',
-    accent: primaryGreen,
+    secondary: '#eab308',       // yellow-500
     
     // UI element colors
     icon: '#9ca3af',            // gray-400
     tabIconDefault: '#9ca3af',
-    tabIconSelected: primaryGreen,
+    tabIconSelected: primaryGreenDark,
+    
+    // NavBar colors
+    navBarBackground: 'rgba(17, 24, 39, 0.95)',
     
     // Border & Card colors
     border: '#374151',          // gray-700

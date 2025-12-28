@@ -307,7 +307,7 @@ export default function ContactScreen() {
           {/* Footer */}
           <View style={[styles.footer, { borderTopColor: colors.border }]}>
             <Text style={[styles.footerText, { color: colors.textMuted }]}>© 2025 IoT Lab</Text>
-            <Text style={[styles.footerLink, { color: colors.primary }]}>Institut Teknologi Bandung</Text>
+            <Text style={[styles.footerLink, { color: colors.accent }]}>Institut Teknologi Bandung</Text>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -324,6 +324,7 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flexGrow: 1,
+    paddingBottom: 90,
   },
   loadingContainer: {
     flex: 1,
