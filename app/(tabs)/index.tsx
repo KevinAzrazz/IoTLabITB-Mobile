@@ -181,7 +181,6 @@ export default function HomeScreen() {
 
         {/* ==================== ABOUT SECTION ==================== */}
         <View style={styles.section}>
-          <Text style={[styles.sectionEyebrow, { color: colors.accent }]}>TENTANG KAMI</Text>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>{aboutTitle}</Text>
           
           {aboutImage ? (
