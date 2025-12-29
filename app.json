@@ -35,6 +35,12 @@
     "scheme": "iot-lab-itb",
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "482c6709-810b-402a-b21f-b6148ff4efbb"
+      }
     }
   }
 }
