@@ -16,12 +16,22 @@ import {
     View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import FormModal from '@/components/form-modal-v2';
 
 type Partner = {
   id: string;
   name: string;
   logo_url: string;
   created_at: string;
+};
+
+type FormField = {
+  name: string;
+  label: string;
+  placeholder: string;
+  type?: 'text';
+  value: string;
+  required?: boolean;
 };
 
 export default function AdminPartners() {
@@ -31,6 +41,8 @@ export default function AdminPartners() {
   const [partners, setPartners] = useState<Partner[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [editingPartner, setEditingPartner] = useState<Partner | null>(null);
 
   useEffect(() => {
     fetchPartners();
@@ -74,6 +86,77 @@ export default function AdminPartners() {
         },
       ]
     );
+  };
+
+  const handleOpenAddModal = () => {
+    setEditingPartner(null);
+    setModalVisible(true);
+  };
+
+  const handleOpenEditModal = (partner: Partner) => {
+    setEditingPartner(partner);
+    setModalVisible(true);
+  };
+
+  const handleSubmitForm = async (data: Record<string, string>) => {
+    try {
+      if (editingPartner) {
+        // Update
+        const { error } = await supabase
+          .from('partners')
+          .update({
+            name: data.name,
+            logo_url: data.logo_url || null,
+          })
+          .eq('id', editingPartner.id);
+
+        if (!error) {
+          Alert.alert('Berhasil', 'Mitra berhasil diperbarui');
+          fetchPartners();
+        } else {
+          throw new Error('Gagal memperbarui mitra');
+        }
+      } else {
+        // Create
+        const { error } = await supabase.from('partners').insert([
+          {
+            name: data.name,
+            logo_url: data.logo_url || null,
+          },
+        ]);
+
+        if (!error) {
+          Alert.alert('Berhasil', 'Mitra berhasil ditambahkan');
+          fetchPartners();
+        } else {
+          throw new Error('Gagal menambahkan mitra');
+        }
+      }
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Terjadi kesalahan');
+      throw error;
+    }
+  };
+
+  const getFormFields = (): FormField[] => {
+    return [
+      {
+        name: 'name',
+        label: 'Nama Mitra',
+        placeholder: 'Masukkan nama mitra',
+        type: 'text',
+        value: editingPartner?.name || '',
+        required: true,
+      },
+      {
+        name: 'logo_url',
+        label: 'URL Logo (Optional)',
+        placeholder: 'https://example.com/logo.png',
+        type: 'text',
+        value: editingPartner?.logo_url || '',
+        required: false,
+      },
+    ];
   };
 
   if (loading) {
@@ -140,7 +223,10 @@ export default function AdminPartners() {
                   {partner.name}
                 </Text>
                 <View style={styles.partnerActions}>
-                  <TouchableOpacity style={[styles.iconButton, { backgroundColor: colors.info + '20' }]}>
+                  <TouchableOpacity
+                    style={[styles.iconButton, { backgroundColor: colors.info + '20' }]}
+                    onPress={() => handleOpenEditModal(partner)}
+                  >
                     <Ionicons name="pencil-outline" size={16} color={colors.info} />
                   </TouchableOpacity>
                   <TouchableOpacity
@@ -156,7 +242,10 @@ export default function AdminPartners() {
         </View>
 
         {/* Add Partner Button */}
-        <TouchableOpacity style={[styles.addButton, { backgroundColor: colors.primary }]}>
+        <TouchableOpacity
+          style={[styles.addButton, { backgroundColor: colors.primary }]}
+          onPress={handleOpenAddModal}
+        >
           <Ionicons name="add" size={24} color="#fff" />
           <Text style={styles.addButtonText}>Tambah Mitra Baru</Text>
         </TouchableOpacity>
@@ -168,6 +257,16 @@ export default function AdminPartners() {
             Kelola mitra dan sponsor yang bekerjasama dengan laboratorium. Logo mitra akan ditampilkan di halaman utama.
           </Text>
         </View>
+
+        {/* Form Modal */}
+        <FormModal
+          visible={modalVisible}
+          onClose={() => setModalVisible(false)}
+          onSubmit={handleSubmitForm}
+          fields={getFormFields()}
+          title={editingPartner ? 'Edit Mitra' : 'Tambah Mitra Baru'}
+          submitButtonText={editingPartner ? 'Perbarui' : 'Tambahkan'}
+        />
       </ScrollView>
     </SafeAreaView>
   );

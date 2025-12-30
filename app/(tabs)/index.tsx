@@ -9,6 +9,7 @@ import {
   StatusBar,
   TouchableOpacity,
   ScrollView,
+  RefreshControl,
   Dimensions,
   ImageBackground,
   Platform,
@@ -84,10 +85,16 @@ export default function HomeScreen() {
   const [aboutImage, setAboutImage] = useState('');
   const [historyContent, setHistoryContent] = useState('');
   const [historyImage, setHistoryImage] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     fetchAllData();
   }, []);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchAllData();
+  };
 
   const fetchAllData = async () => {
     setLoading(true);
@@ -117,14 +124,13 @@ export default function HomeScreen() {
         setHistoryContent(contentMap.get('history_content') || '');
         setHistoryImage(contentMap.get('history_image') || '');
       }
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const filteredProjects = useMemo(() => {
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    };  const filteredProjects = useMemo(() => {
     if (filter === 'all') return projects;
     return projects.filter((p) => p.category.toLowerCase() === filter.toLowerCase());
   }, [filter, projects]);
@@ -149,6 +155,13 @@ export default function HomeScreen() {
         ref={scrollViewRef}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.primary}
+          />
+        }
       >
         {/* ==================== HERO SECTION ==================== */}
         <View style={styles.heroSection}>

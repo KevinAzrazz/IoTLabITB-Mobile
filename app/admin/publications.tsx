@@ -17,6 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { supabase } from '@/lib/supabase';
+import FormModal from '@/components/form-modal-v2';
 
 type Publication = {
   id: string;
@@ -27,6 +28,15 @@ type Publication = {
   created_at: string;
 };
 
+type FormField = {
+  name: string;
+  label: string;
+  placeholder: string;
+  type?: 'text' | 'textarea' | 'number';
+  value: string;
+  required?: boolean;
+};
+
 export default function AdminPublications() {
   const colorScheme = useColorScheme() ?? 'light';
   const colors = Colors[colorScheme];
@@ -35,6 +45,8 @@ export default function AdminPublications() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [modalVisible, setModalVisible] = useState(false);
+  const [editingPublication, setEditingPublication] = useState<Publication | null>(null);
 
   useEffect(() => {
     fetchPublications();
@@ -77,6 +89,97 @@ export default function AdminPublications() {
         },
       ]
     );
+  };
+
+  const handleOpenAddModal = () => {
+    setEditingPublication(null);
+    setModalVisible(true);
+  };
+
+  const handleOpenEditModal = (publication: Publication) => {
+    setEditingPublication(publication);
+    setModalVisible(true);
+  };
+
+  const handleSubmitForm = async (data: Record<string, string>) => {
+    try {
+      if (editingPublication) {
+        // Update
+        const { error } = await supabase
+          .from('publications')
+          .update({
+            title: data.title,
+            authors: data.authors,
+            year: parseInt(data.year) || new Date().getFullYear(),
+            url: data.url || null,
+          })
+          .eq('id', editingPublication.id);
+
+        if (!error) {
+          Alert.alert('Berhasil', 'Publikasi berhasil diperbarui');
+          fetchPublications();
+        } else {
+          throw new Error('Gagal memperbarui publikasi');
+        }
+      } else {
+        // Create
+        const { error } = await supabase.from('publications').insert([
+          {
+            title: data.title,
+            authors: data.authors,
+            year: parseInt(data.year) || new Date().getFullYear(),
+            url: data.url || null,
+          },
+        ]);
+
+        if (!error) {
+          Alert.alert('Berhasil', 'Publikasi berhasil ditambahkan');
+          fetchPublications();
+        } else {
+          throw new Error('Gagal menambahkan publikasi');
+        }
+      }
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Terjadi kesalahan');
+      throw error;
+    }
+  };
+
+  const getFormFields = (): FormField[] => {
+    return [
+      {
+        name: 'title',
+        label: 'Judul Publikasi',
+        placeholder: 'Masukkan judul publikasi',
+        type: 'text',
+        value: editingPublication?.title || '',
+        required: true,
+      },
+      {
+        name: 'authors',
+        label: 'Penulis',
+        placeholder: 'Masukkan nama-nama penulis',
+        type: 'text',
+        value: editingPublication?.authors || '',
+        required: true,
+      },
+      {
+        name: 'year',
+        label: 'Tahun Publikasi',
+        placeholder: new Date().getFullYear().toString(),
+        type: 'number',
+        value: editingPublication?.year.toString() || '',
+        required: true,
+      },
+      {
+        name: 'url',
+        label: 'URL (Optional)',
+        placeholder: 'https://example.com',
+        type: 'text',
+        value: editingPublication?.url || '',
+        required: false,
+      },
+    ];
   };
 
   const filteredPublications = publications.filter(p =>
@@ -165,7 +268,10 @@ export default function AdminPublications() {
                 </View>
               </View>
               <View style={styles.pubActions}>
-                <TouchableOpacity style={[styles.iconButton, { backgroundColor: colors.info + '20' }]}>
+                <TouchableOpacity
+                  style={[styles.iconButton, { backgroundColor: colors.info + '20' }]}
+                  onPress={() => handleOpenEditModal(pub)}
+                >
                   <Ionicons name="pencil-outline" size={18} color={colors.info} />
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -181,10 +287,23 @@ export default function AdminPublications() {
       </View>
 
       {/* Add Button */}
-      <TouchableOpacity style={[styles.addButton, { backgroundColor: colors.primary }]}>
+      <TouchableOpacity
+        style={[styles.addButton, { backgroundColor: colors.primary }]}
+        onPress={handleOpenAddModal}
+      >
         <Ionicons name="add" size={24} color="#fff" />
         <Text style={styles.addButtonText}>Tambah Publikasi Baru</Text>
       </TouchableOpacity>
+
+      {/* Form Modal */}
+      <FormModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        onSubmit={handleSubmitForm}
+        fields={getFormFields()}
+        title={editingPublication ? 'Edit Publikasi' : 'Tambah Publikasi Baru'}
+        submitButtonText={editingPublication ? 'Perbarui' : 'Tambahkan'}
+      />
       </ScrollView>
     </SafeAreaView>
   );

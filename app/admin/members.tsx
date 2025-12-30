@@ -17,6 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { supabase } from '@/lib/supabase';
+import FormModal from '@/components/form-modal-v2';
 
 type Member = {
   id: string;
@@ -24,6 +25,15 @@ type Member = {
   role: string;
   image_url?: string;
   created_at: string;
+};
+
+type FormField = {
+  name: string;
+  label: string;
+  placeholder: string;
+  type?: 'text' | 'textarea';
+  value: string;
+  required?: boolean;
 };
 
 export default function AdminMembers() {
@@ -34,6 +44,8 @@ export default function AdminMembers() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [modalVisible, setModalVisible] = useState(false);
+  const [editingMember, setEditingMember] = useState<Member | null>(null);
 
   useEffect(() => {
     fetchMembers();
@@ -76,6 +88,87 @@ export default function AdminMembers() {
         },
       ]
     );
+  };
+
+  const handleOpenAddModal = () => {
+    setEditingMember(null);
+    setModalVisible(true);
+  };
+
+  const handleOpenEditModal = (member: Member) => {
+    setEditingMember(member);
+    setModalVisible(true);
+  };
+
+  const handleSubmitForm = async (data: Record<string, string>) => {
+    try {
+      if (editingMember) {
+        // Update
+        const { error } = await supabase
+          .from('members')
+          .update({
+            name: data.name,
+            role: data.role,
+            image_url: data.image_url || null,
+          })
+          .eq('id', editingMember.id);
+
+        if (!error) {
+          Alert.alert('Berhasil', 'Anggota berhasil diperbarui');
+          fetchMembers();
+        } else {
+          throw new Error('Gagal memperbarui anggota');
+        }
+      } else {
+        // Create
+        const { error } = await supabase.from('members').insert([
+          {
+            name: data.name,
+            role: data.role,
+            image_url: data.image_url || null,
+          },
+        ]);
+
+        if (!error) {
+          Alert.alert('Berhasil', 'Anggota berhasil ditambahkan');
+          fetchMembers();
+        } else {
+          throw new Error('Gagal menambahkan anggota');
+        }
+      }
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Terjadi kesalahan');
+      throw error;
+    }
+  };
+
+  const getFormFields = (): FormField[] => {
+    return [
+      {
+        name: 'name',
+        label: 'Nama Anggota',
+        placeholder: 'Masukkan nama lengkap',
+        type: 'text',
+        value: editingMember?.name || '',
+        required: true,
+      },
+      {
+        name: 'role',
+        label: 'Posisi/Role',
+        placeholder: 'Contoh: Researcher, Student, etc',
+        type: 'text',
+        value: editingMember?.role || '',
+        required: true,
+      },
+      {
+        name: 'image_url',
+        label: 'URL Foto Profil (Optional)',
+        placeholder: 'https://example.com/image.jpg',
+        type: 'text',
+        value: editingMember?.image_url || '',
+        required: false,
+      },
+    ];
   };
 
   const filteredMembers = members.filter(m =>
@@ -157,7 +250,10 @@ export default function AdminMembers() {
                 </Text>
               </View>
               <View style={styles.memberActions}>
-                <TouchableOpacity style={[styles.iconButton, { backgroundColor: colors.info + '20' }]}>
+                <TouchableOpacity
+                  style={[styles.iconButton, { backgroundColor: colors.info + '20' }]}
+                  onPress={() => handleOpenEditModal(member)}
+                >
                   <Ionicons name="pencil-outline" size={18} color={colors.info} />
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -173,10 +269,23 @@ export default function AdminMembers() {
       </View>
 
       {/* Add Button */}
-      <TouchableOpacity style={[styles.addButton, { backgroundColor: colors.primary }]}>
+      <TouchableOpacity
+        style={[styles.addButton, { backgroundColor: colors.primary }]}
+        onPress={handleOpenAddModal}
+      >
         <Ionicons name="add" size={24} color="#fff" />
         <Text style={styles.addButtonText}>Tambah Anggota Baru</Text>
       </TouchableOpacity>
+
+      {/* Form Modal */}
+      <FormModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        onSubmit={handleSubmitForm}
+        fields={getFormFields()}
+        title={editingMember ? 'Edit Anggota Tim' : 'Tambah Anggota Tim Baru'}
+        submitButtonText={editingMember ? 'Perbarui' : 'Tambahkan'}
+      />
       </ScrollView>
     </SafeAreaView>
   );

@@ -16,10 +16,20 @@ import {
   View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import FormModal from '@/components/form-modal-v2';
 
 type PageContent = {
   key: string;
   value: string;
+};
+
+type FormField = {
+  name: string;
+  label: string;
+  placeholder: string;
+  type?: 'text' | 'textarea';
+  value: string;
+  required?: boolean;
 };
 
 export default function AdminSettings() {
@@ -29,6 +39,8 @@ export default function AdminSettings() {
   const [pageContent, setPageContent] = useState<Map<string, string>>(new Map());
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [editingKey, setEditingKey] = useState<string | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -69,38 +81,49 @@ export default function AdminSettings() {
     );
   };
 
-  const handleEditContent = (key: string, currentValue: string, isMultiline: boolean = false) => {
-    Alert.prompt(
-      'Edit Konten',
-      `Ubah ${key.replace('_', ' ')}:`,
-      [
-        { text: 'Batal', style: 'cancel' },
-        {
-          text: 'Simpan',
-          // @ts-ignore - Alert.prompt callback type
-          onPress: async (newValue: string) => {
-            if (!newValue || newValue.trim() === '') {
-              Alert.alert('Error', 'Nilai tidak boleh kosong');
-              return;
-            }
+  const handleOpenEditModal = (key: string) => {
+    setEditingKey(key);
+    setModalVisible(true);
+  };
 
-            const { error } = await supabase
-              .from('page_content')
-              .update({ value: newValue.trim() })
-              .eq('key', key);
+  const handleSubmitForm = async (data: Record<string, string>) => {
+    if (!editingKey) return;
 
-            if (!error) {
-              Alert.alert('Berhasil', 'Konten berhasil diperbarui');
-              fetchData();
-            } else {
-              Alert.alert('Error', 'Gagal memperbarui konten');
-            }
-          },
-        },
-      ],
-      isMultiline ? 'plain-text' : 'default',
-      currentValue
-    );
+    try {
+      const { error } = await supabase
+        .from('page_content')
+        .update({ value: data.value.trim() })
+        .eq('key', editingKey);
+
+      if (!error) {
+        Alert.alert('Berhasil', 'Konten berhasil diperbarui');
+        fetchData();
+      } else {
+        throw new Error('Gagal memperbarui konten');
+      }
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Terjadi kesalahan');
+      throw error;
+    }
+  };
+
+  const getFormFields = (): FormField[] => {
+    if (!editingKey) return [];
+
+    const label = editingKey.replace(/_/g, ' ').toUpperCase();
+    const currentValue = pageContent.get(editingKey) || '';
+    const isMultiline = ['about_content', 'contact_address', 'history'].includes(editingKey);
+
+    return [
+      {
+        name: 'value',
+        label: label,
+        placeholder: `Masukkan nilai untuk ${label}`,
+        type: isMultiline ? 'textarea' : 'text',
+        value: currentValue,
+        required: true,
+      },
+    ];
   };
 
   if (loading) {
@@ -147,7 +170,7 @@ export default function AdminSettings() {
               <View style={styles.contentHeader}>
                 <Text style={[styles.contentLabel, { color: colors.textMuted }]}>Hero Title</Text>
                 <TouchableOpacity
-                  onPress={() => handleEditContent('hero_title', pageContent.get('hero_title') || '')}
+                  onPress={() => handleOpenEditModal('hero_title')}
                 >
                   <Ionicons name="pencil" size={18} color={colors.primary} />
                 </TouchableOpacity>
@@ -162,7 +185,7 @@ export default function AdminSettings() {
               <View style={styles.contentHeader}>
                 <Text style={[styles.contentLabel, { color: colors.textMuted }]}>Hero Subtitle</Text>
                 <TouchableOpacity
-                  onPress={() => handleEditContent('hero_subtitle', pageContent.get('hero_subtitle') || '')}
+                  onPress={() => handleOpenEditModal('hero_subtitle')}
                 >
                   <Ionicons name="pencil" size={18} color={colors.primary} />
                 </TouchableOpacity>
@@ -177,7 +200,7 @@ export default function AdminSettings() {
               <View style={styles.contentHeader}>
                 <Text style={[styles.contentLabel, { color: colors.textMuted }]}>About Title</Text>
                 <TouchableOpacity
-                  onPress={() => handleEditContent('about_title', pageContent.get('about_title') || '')}
+                  onPress={() => handleOpenEditModal('about_title')}
                 >
                   <Ionicons name="pencil" size={18} color={colors.primary} />
                 </TouchableOpacity>
@@ -192,7 +215,7 @@ export default function AdminSettings() {
               <View style={styles.contentHeader}>
                 <Text style={[styles.contentLabel, { color: colors.textMuted }]}>About Content</Text>
                 <TouchableOpacity
-                  onPress={() => handleEditContent('about_content', pageContent.get('about_content') || '', true)}
+                  onPress={() => handleOpenEditModal('about_content')}
                 >
                   <Ionicons name="pencil" size={18} color={colors.primary} />
                 </TouchableOpacity>
@@ -207,7 +230,7 @@ export default function AdminSettings() {
               <View style={styles.contentHeader}>
                 <Text style={[styles.contentLabel, { color: colors.textMuted }]}>Contact Email</Text>
                 <TouchableOpacity
-                  onPress={() => handleEditContent('contact_email', pageContent.get('contact_email') || '')}
+                  onPress={() => handleOpenEditModal('contact_email')}
                 >
                   <Ionicons name="pencil" size={18} color={colors.primary} />
                 </TouchableOpacity>
@@ -222,7 +245,7 @@ export default function AdminSettings() {
               <View style={styles.contentHeader}>
                 <Text style={[styles.contentLabel, { color: colors.textMuted }]}>Contact Phone</Text>
                 <TouchableOpacity
-                  onPress={() => handleEditContent('contact_phone', pageContent.get('contact_phone') || '')}
+                  onPress={() => handleOpenEditModal('contact_phone')}
                 >
                   <Ionicons name="pencil" size={18} color={colors.primary} />
                 </TouchableOpacity>
@@ -237,7 +260,7 @@ export default function AdminSettings() {
               <View style={styles.contentHeader}>
                 <Text style={[styles.contentLabel, { color: colors.textMuted }]}>Contact Address</Text>
                 <TouchableOpacity
-                  onPress={() => handleEditContent('contact_address', pageContent.get('contact_address') || '', true)}
+                  onPress={() => handleOpenEditModal('contact_address')}
                 >
                   <Ionicons name="pencil" size={18} color={colors.primary} />
                 </TouchableOpacity>
@@ -265,6 +288,19 @@ export default function AdminSettings() {
         <Ionicons name="log-out-outline" size={20} color="#fff" />
         <Text style={styles.logoutText}>Keluar dari Admin</Text>
       </TouchableOpacity>
+
+      {/* Form Modal */}
+      <FormModal
+        visible={modalVisible}
+        onClose={() => {
+          setModalVisible(false);
+          setEditingKey(null);
+        }}
+        onSubmit={handleSubmitForm}
+        fields={getFormFields()}
+        title={editingKey ? `Edit ${editingKey.replace(/_/g, ' ')}` : 'Edit Konten'}
+        submitButtonText="Simpan"
+      />
       </ScrollView>
     </SafeAreaView>
   );

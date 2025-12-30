@@ -10,7 +10,6 @@ import {
   TextInput,
   Alert,
   Image,
-  Modal,
   StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,6 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { supabase } from '@/lib/supabase';
+import FormModal from '@/components/form-modal-v2';
 
 type Project = {
   id: string;
@@ -29,6 +29,16 @@ type Project = {
   created_at: string;
 };
 
+type FormField = {
+  name: string;
+  label: string;
+  placeholder: string;
+  type?: 'text' | 'textarea' | 'dropdown';
+  options?: { label: string; value: string }[];
+  value: string;
+  required?: boolean;
+};
+
 export default function AdminProjects() {
   const colorScheme = useColorScheme() ?? 'light';
   const colors = Colors[colorScheme];
@@ -38,6 +48,8 @@ export default function AdminProjects() {
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
+  const [modalVisible, setModalVisible] = useState(false);
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
 
   const categories = ['all', 'S1', 'S2', 'S3'];
 
@@ -84,6 +96,111 @@ export default function AdminProjects() {
         },
       ]
     );
+  };
+
+  const handleOpenAddModal = () => {
+    setEditingProject(null);
+    setModalVisible(true);
+  };
+
+  const handleOpenEditModal = (project: Project) => {
+    setEditingProject(project);
+    setModalVisible(true);
+  };
+
+  const generateSlug = (title: string) => {
+    return title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  };
+
+  const handleSubmitForm = async (data: Record<string, string>) => {
+    try {
+      if (editingProject) {
+        // Update
+        const { error } = await supabase
+          .from('projects')
+          .update({
+            title: data.title,
+            description: data.description,
+            category: data.category,
+            image_url: data.image_url || null,
+            slug: generateSlug(data.title),
+          })
+          .eq('id', editingProject.id);
+
+        if (!error) {
+          Alert.alert('Berhasil', 'Proyek berhasil diperbarui');
+          fetchProjects();
+        } else {
+          throw new Error('Gagal memperbarui proyek');
+        }
+      } else {
+        // Create
+        const { error } = await supabase.from('projects').insert([
+          {
+            title: data.title,
+            description: data.description,
+            category: data.category,
+            image_url: data.image_url || null,
+            slug: generateSlug(data.title),
+          },
+        ]);
+
+        if (!error) {
+          Alert.alert('Berhasil', 'Proyek berhasil ditambahkan');
+          fetchProjects();
+        } else {
+          throw new Error('Gagal menambahkan proyek');
+        }
+      }
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Terjadi kesalahan');
+      throw error;
+    }
+  };
+
+  const getFormFields = (): FormField[] => {
+    return [
+      {
+        name: 'title',
+        label: 'Judul Proyek',
+        placeholder: 'Masukkan judul proyek',
+        type: 'text',
+        value: editingProject?.title || '',
+        required: true,
+      },
+      {
+        name: 'description',
+        label: 'Deskripsi',
+        placeholder: 'Masukkan deskripsi proyek',
+        type: 'textarea',
+        value: editingProject?.description || '',
+        required: true,
+      },
+      {
+        name: 'category',
+        label: 'Kategori',
+        placeholder: 'Pilih kategori',
+        type: 'dropdown',
+        options: [
+          { label: 'S1', value: 'S1' },
+          { label: 'S2', value: 'S2' },
+          { label: 'S3', value: 'S3' },
+        ],
+        value: editingProject?.category || 'S1',
+        required: true,
+      },
+      {
+        name: 'image_url',
+        label: 'URL Gambar (Optional)',
+        placeholder: 'https://example.com/image.jpg',
+        type: 'text',
+        value: editingProject?.image_url || '',
+        required: false,
+      },
+    ];
   };
 
   const filteredProjects = projects.filter(p =>
@@ -190,7 +307,10 @@ export default function AdminProjects() {
                   {project.description}
                 </Text>
                 <View style={styles.projectActions}>
-                  <TouchableOpacity style={[styles.actionButton, { backgroundColor: colors.info + '20' }]}>
+                  <TouchableOpacity
+                    style={[styles.actionButton, { backgroundColor: colors.info + '20' }]}
+                    onPress={() => handleOpenEditModal(project)}
+                  >
                     <Ionicons name="pencil-outline" size={16} color={colors.info} />
                     <Text style={[styles.actionText, { color: colors.info }]}>Edit</Text>
                   </TouchableOpacity>
@@ -209,10 +329,23 @@ export default function AdminProjects() {
       </View>
 
       {/* Add Button */}
-      <TouchableOpacity style={[styles.addButton, { backgroundColor: colors.primary }]}>
+      <TouchableOpacity
+        style={[styles.addButton, { backgroundColor: colors.primary }]}
+        onPress={handleOpenAddModal}
+      >
         <Ionicons name="add" size={24} color="#fff" />
         <Text style={styles.addButtonText}>Tambah Proyek Baru</Text>
       </TouchableOpacity>
+
+      {/* Form Modal */}
+      <FormModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        onSubmit={handleSubmitForm}
+        fields={getFormFields()}
+        title={editingProject ? 'Edit Proyek' : 'Tambah Proyek Baru'}
+        submitButtonText={editingProject ? 'Perbarui' : 'Tambahkan'}
+      />
       </ScrollView>
     </SafeAreaView>
   );
