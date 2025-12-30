@@ -117,45 +117,35 @@ export default function AdminProjects() {
 
   const handleSubmitForm = async (data: Record<string, string>) => {
     try {
+      
+      const projectData = {
+        title: data.title,
+        description: data.description,
+        category: data.category,
+        image_url: data.image_url || null,
+        slug: generateSlug(data.title),
+        members: '',
+      };
+      
       if (editingProject) {
-        // Update
-        const { error } = await supabase
+        const { data: result, error } = await supabase
           .from('projects')
-          .update({
-            title: data.title,
-            description: data.description,
-            category: data.category,
-            image_url: data.image_url || null,
-            slug: generateSlug(data.title),
-          })
-          .eq('id', editingProject.id);
-
-        if (!error) {
-          Alert.alert('Berhasil', 'Proyek berhasil diperbarui');
-          fetchProjects();
-        } else {
-          throw new Error('Gagal memperbarui proyek');
-        }
+          .update(projectData)
+          .eq('id', editingProject.id)
+          .select();
+        fetchProjects();
       } else {
-        // Create
-        const { error } = await supabase.from('projects').insert([
-          {
-            title: data.title,
-            description: data.description,
-            category: data.category,
-            image_url: data.image_url || null,
-            slug: generateSlug(data.title),
-          },
-        ]);
-
-        if (!error) {
-          Alert.alert('Berhasil', 'Proyek berhasil ditambahkan');
-          fetchProjects();
-        } else {
-          throw new Error('Gagal menambahkan proyek');
-        }
+        const { data: result, error } = await supabase
+          .from('projects')
+          .insert([projectData])
+          .select();
+        fetchProjects();
       }
     } catch (error: any) {
+      console.error('=== FORM SUBMISSION ERROR ===');
+      console.error('Error object:', error);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
       Alert.alert('Error', error.message || 'Terjadi kesalahan');
       throw error;
     }
